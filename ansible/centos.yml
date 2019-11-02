@@ -1,0 +1,43 @@
+---
+- name: Playbook for centos7 managed node
+  hosts: all
+  gather_facts: true
+
+  tasks:
+    - name: Create group
+      group:
+        name: "{{ item.name }}"
+        gid: "{{ item.gid }}"
+      loop: "{{ group }}"
+      tags: group
+
+    - name: Create User
+      user:
+        name: "{{ item.name }}"
+        uid: "{{ item.uid }}"
+        group: "{{ item.group }}"
+        groups: "{{ item.groups }}"
+        home: "{{ item.home }}"
+        shell: "{{ item.shell }}"
+      loop: "{{ user }}"
+      tags: user
+
+    - name: System service
+      systemd:
+        name: "{{ item.name }}"
+        enabled: "{{ item.enabled }}"
+        state: "{{ item.state }}"
+      loop: "{{ service }}"
+      tags: service
+
+- name: Configure for serverspec at localhost
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    
+    - name: Dump hostvars for serverspec
+      copy:
+        content: "{{ hostvars | to_nice_yaml }}"
+        dest: "../serverspec/spec_hosts/{{ project_name }}.yml"
+      tags: serverspec

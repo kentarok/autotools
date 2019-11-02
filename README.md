@@ -1,0 +1,4 @@
+以下の記事のサンプルコードになります。
+
+Ansibleの変数を利用してserverspecで自動テストする実装例
+https://qiita.com/kentarok/items/d196c8ea4a57af6b86f7

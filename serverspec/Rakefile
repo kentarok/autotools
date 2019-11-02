@@ -1,0 +1,40 @@
+require 'rake'
+require 'rspec/core/rake_task'
+require 'yaml'
+
+## 引数チェック
+if ARGV.length < 2
+  puts "Usage Error: rake serverspec PROJECT_NAME!"
+  exit(1)
+end
+
+project_name = ARGV[1]
+
+## serverspec用hostsファイルの存在チェック
+unless File.exist?("./spec_hosts/#{project_name}.yml")
+  puts "Usage Error: Not Found ./spec_hosts/#{project_name}.yml file."
+  exit(1)
+end
+
+hosts = YAML.load_file("./spec_hosts/#{project_name}.yml")
+
+desc "Run spec to all hosts"
+task :spec => 'spec:all'
+
+namespace :spec do
+  task :all => hosts.keys.map {|key| 'spec:' + key }
+  
+  hosts.keys.each do |key|
+    desc "Run spec to #{key}"
+    RSpec::Core::RakeTask.new(key.to_sym) do |t|
+      ENV['INVENTORY_HOST'] = key
+      ENV['PROJECT_NAME'] = project_name
+      t.pattern = 'spec/{' + hosts[key]['serverspec_role'].join(',') + '}/*_spec.rb'
+      t.fail_on_error = false
+    end
+  end
+end
+
+# rake実行時に付与した引数がtaskと解釈されることを防ぐために、カラのtaskを作る
+ARGV.slice(1,ARGV.size).each{|v| task v.to_sym do; end}
+
